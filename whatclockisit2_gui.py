@@ -23,18 +23,23 @@ data = config['main']
 
 # ini 변경 함수
 def iniup(ini_key, ini_value):
-    config = ConfigParser()
-    config.read(appdata)
-    data = config['main']
     data[ini_key] = ini_value
     with open(appdata, 'w') as main:
         config.write(main)
 
 
-# cour 생존 확인
-iniup("check_live_back", "waiting")
-iniup("check_live_call", "call")
-time.sleep(0.05)
+def check_live():
+    iniup('live_check', 'check')
+    time.sleep(1)
+    if data['live_check'] == "check":
+        return "live"
+    else:
+        return "dead"
+
+if check_live() == "live":
+    print("살아있음")
+else:
+    print("죽어있음")
 
 
 class wcii_clock(QWidget):
@@ -79,7 +84,7 @@ class wcii_clock(QWidget):
         clock_on_group.addButton(self.clock_on_rb)
         clock_on_group.addButton(self.clock_off_rb)
 
-        if data['clock_on'] != "on":
+        if check_live() != "live":
             self.clock_off_rb.setChecked(True)
         else:
             self.clock_on_rb.setChecked(True)
@@ -122,24 +127,19 @@ class wcii_clock(QWidget):
         return groupbox
 
     def clock_on(self):  # 시계 켜기
-        iniup("check_live_back", "waiting")
-        iniup("check_live_call", "call")
-        time.sleep(1)
-        if data['check_live_back'] != "back":
+        if check_live() != "live":
             QMessageBox.information(self, "코어가 꺼져있어요", "지금몇시계 코어를 실행해주세요!")
             self.clock_off_rb.setChecked(True)
         else:
             iniup("clock_on", "oning")
+            time.sleep(0.1)
 
     def clock_off(self):  # 시계 대기 상태
-        iniup("check_live_back", "waiting")
-        iniup("check_live_call", "call")
-        time.sleep(0.1)
-        if data['check_live_back'] != "back":
+        if check_live() != "live":
             QMessageBox.information(self, "코어가 이미 꺼져있어요", "코어가 이미 꺼져있어요")
         else:
             iniup("clock_on", "offing")
-        time.sleep(1)
+            time.sleep(0.1)
 
     def text_on(self):
         iniup("text_on", "on")
@@ -278,14 +278,9 @@ class wcii_clock(QWidget):
         filter = "사진 파일(*.png)"
         wp_link = QFileDialog.getOpenFileName(self, title, None, filter)
         if wp_link[0] != "":
-            print(wp_link[0])
-            self.wallpaper_url.setText(wp_link[0])
-            iniup('wallpaper_source', wp_link[0])
-            data['wallpaper_sourve'] = wp_link[0]
-            with open(appdata, 'w') as main:
-                config.write(main)
-            self.reflesh()
-            print(data['wallpaper_source'])
+            wp_link = wp_link[0]
+            iniup('wallpaper_source', wp_link)
+            self.wallpaper_url.setText(wp_link)
 
     def select_font(self):
         title = "폰트파일을 골라주세요"
@@ -346,26 +341,21 @@ class wcii_clock(QWidget):
         return groupbox
 
     def kill(self):
+
         reply = QMessageBox.question(self, '지금몇시계를 내쫒으실 건가요...?', "시계를 단순히 끄고 싶다면 종료하지말고 비활성화를 해주세요.",
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
-            iniup("clock_on", "kill")
-            self.clock_off_rb.setChecked(True)
-            QMessageBox.information(self, "지금몇시계를 종료했습니다", "시계를 켜실려면 다시 코어를 실행해주세요!")
-        elif reply == QMessageBox.No:
-            QMessageBox.information(self, "취소했습니다!", "취소 했어요!")
+                iniup("clock_on", "kill")
+                self.clock_off_rb.setChecked(True)
+                QMessageBox.information(self, "지금몇시계를 종료했습니다", "시계를 켜실려면 다시 코어를 실행해주세요!")
+        else:
+            QMessageBox.information(self, "시계가 이미 꺼져있어요..", "시계가 이미 꺼져있어요..")
 
     def test(self):
-        config = ConfigParser()
-        config.read(appdata)
-        data = config['main']
-
-        iniup('check_live_back', "waiting")
-        iniup('check_live_call', "call")
-        if data['check_live_back'] == "back":
-            print("GUI : wallpaper는 살아있음")
-        elif data['check_live_back'] == "waiting":
-            print("GUI : wallpaper는 죽어있음")
+        if check_live() == "live":
+            print("코어가 살아있음")
+        else:
+            print("코어가 죽었거나 응답하지 않음")
 
     def screen_W_set(self):
         val = self.screensize_W.value()
@@ -376,14 +366,10 @@ class wcii_clock(QWidget):
         iniup('screen_H', str(val))
 
     def reflesh(self):  # 시계 새로고침
-        iniup("check_live_back", "waiting")
-        iniup("check_live_call", "call")
-        time.sleep(0.1)
-        if data['check_live_back'] != "back":
+        if check_live() != "live":
             QMessageBox.information(self, "코어가 꺼져있어요", "지금몇시계 코어를 실행해주세요!")
         else:
             iniup("reflesh", "yes")
-            iniup("online", "online")
 
     def center(self):
         qr = self.frameGeometry()

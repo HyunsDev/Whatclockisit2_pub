@@ -21,6 +21,17 @@ dimage = appimage + "whatclockisit2_wallpaper_source.png"
 dffile = "NotoSansCJKkr-Black.otf"
 dffolder = appfont
 
+config = ConfigParser()
+config.read(appdata)
+data = config['main']
+
+#ini 변경 함수
+def iniup(ini_key, ini_value):
+    data[ini_key] = ini_value
+    with open(appdata, 'w') as main:
+        config.write(main)
+
+
 
 #에러 설정
 class wallpaper_error(Exception):
@@ -35,9 +46,6 @@ class font_error(Exception):
 def wcii_wallpaper(wciitext):
     nowtime = wciitime()
     nowtext = wciitext
-    config = ConfigParser()
-    config.read(appdata)
-    data = config['main']
     ws = data['wallpaper_source']
     ffolder = data['fontfolder']
     ffile = data['fontfile']
@@ -60,6 +68,8 @@ def wcii_wallpaper(wciitext):
         imagepath = Image.open(ws)
     except:
         imagepath = Image.open(dimage)
+        print("이미지 불러오기 오류 발생")
+        iniup('wallpaper_source', dimage)
 
     font = ImageFont.truetype(path.join(ffolder, ffile), fsize)
     draw = ImageDraw.Draw(imagepath)
@@ -70,10 +80,9 @@ def wcii_wallpaper(wciitext):
     imagepath = path.normpath(wt)
     windll.user32.SystemParametersInfoW(20, 0, imagepath, 0)
 
+    print("<바탕화면 새로고침>")
+
 def stop_wallpaper():
-    config = ConfigParser()
-    config.read(appdata)
-    data = config['main']
     ws = data['wallpaper_source']
     ffolder = data['fontfolder']
     ffile = data['fontfile']
@@ -99,16 +108,6 @@ def stop_wallpaper():
     imagepath = path.normpath(savedimage)
     windll.user32.SystemParametersInfoW(20, 0, imagepath, 0)
 
-#ini 변경 함수
-
-def iniup(ini_key, ini_value):
-    config = ConfigParser()
-    config.read(appdata)
-    data = config['main']
-    data[ini_key] = ini_value
-    with open(appdata, 'w') as main:
-        config.write(main)
-
 
 
 wciitextnow = wciitext()
@@ -117,9 +116,6 @@ lognow = datetime.datetime.now()
 with open(applog + "wakeup.log", "a") as f:
     f.write("%s년 %s월 %s일 %s시 %s분 %s초에 지금몇시계 일어났어요!\n" % (lognow.year,lognow.month,lognow.day,lognow.hour,lognow.minute,lognow.second))
 print("wcii 코어 일어났어요!")
-wcii_wallpaper(wciitextnow)
-
-
 
 #메인 코드
 iniup("clock_on", "oning")
@@ -130,23 +126,27 @@ if True:
         if True:
         #메인 코드 시작
             now = datetime.datetime.now()
-            config = ConfigParser()
-            config.read(appdata)
-            data = config['main']
 
-            if data["clock_on"] == "off":
-                sleep(0.9)
-
-            elif data["clock_on"] == "oning":
+            if data["clock_on"] == "oning":
                 wcii_wallpaper(wciitext())
                 iniup("clock_on", "on")
                 print("지금몇시계 영업시작")
+                sleep(0.1)
+
+            elif data["clock_on"] == "offing":  # 종료ing
+                stop_wallpaper()
+                iniup("clock_on", "off")
+                print("지금몇시계 영업종료")
 
             elif data["clock_on"] == "kill":
                 stop_wallpaper()
                 iniup("clock_on", "die")
                 print("지금몇시계 폐업")
+                sleep(0.1)
                 break
+
+            elif data["clock_on"] == "off":
+                sleep(0.9)
 
             else:
                 nowmin = now.strftime('%M') #30분마다 문구 불러오기
@@ -156,32 +156,16 @@ if True:
                     korean_nowtext = wciitext()
 
                 if data["reflesh"] == "yes": #새로고침
-                    iniup("online", "online")
+                    sleep(0.5)
                     wciitextnow = wciitext()
                     wcii_wallpaper(wciitextnow)
                     iniup('reflesh', "no")
 
                 if now.strftime('%S') == "00": #실행
-                    iniup("online", "online")
                     wcii_wallpaper(wciitextnow)
                     print("바탕화면 변경 완료 (%s)" % (wciitime()))
 
-                if data["clock_on"] == "offing": #종료ing
-                    stop_wallpaper()
-                    iniup("clock_on", "off")
-                    print("지금몇시계 영업종료")
-
-                if data['check_live_call'] == "call": #체크 구문
-                    data['check_live_call'] = "waiting" #요청 대기
-                    data['check_live_back'] = "back" #응답
-                    with open(appdata, 'w') as main:  # save
-                        config.write(main)
-
-                    if data['clock_on'] == "on":
-                        print("wallpaper의 말 : 시계도 켜져있고 나도 살아있어요!!")
-                    else:
-                        print("wallpaper의 말 : 시계는 죽었지만 나는 살아있어요!!")
-
+            iniup('live_check', 'live')
             sleep(0.9)
 
 '''
