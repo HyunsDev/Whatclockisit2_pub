@@ -1,10 +1,10 @@
 import sys
 import time
+import shutil
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from os import getenv
 from configparser import ConfigParser  # ini 파일 모듈
-from urllib.request import urlopen  # 서버
 
 # appdata 불러오기
 appdatafolder = getenv('localappdata') + "/whatclockisit/"
@@ -153,13 +153,13 @@ class wcii_clock(QWidget):
         groupbox = QGroupBox('커스텀마이징')
 
         self.wallpaper_lable = QLabel("배경사진")
-        self.wallpaper_url = QLineEdit(data['wallpaper_source'])
+        #self.wallpaper_url = QLineEdit(data['wallpaper_source'])
         self.wallpaper_button = QPushButton("파일 선택")
         self.wallpaper_button.clicked.connect(self.select_wallpaper)
 
         wallpaper_box = QHBoxLayout()
         wallpaper_box.addWidget(self.wallpaper_lable)
-        wallpaper_box.addWidget(self.wallpaper_url)
+       # wallpaper_box.addWidget(self.wallpaper_url)
         wallpaper_box.addWidget(self.wallpaper_button)
 
         font_url = data['fontfolder'] + "/" + data['fontfile']
@@ -278,9 +278,8 @@ class wcii_clock(QWidget):
         filter = "사진 파일(*.png)"
         wp_link = QFileDialog.getOpenFileName(self, title, None, filter)
         if wp_link[0] != "":
-            wp_link = wp_link[0]
-            iniup('wallpaper_source', wp_link)
-            self.wallpaper_url.setText(wp_link)
+            shutil.copyfile(wp_link[0], appimage+'wcii_wall.png')
+            self.reflesh()
 
     def select_font(self):
         title = "폰트파일을 골라주세요"
@@ -302,11 +301,12 @@ class wcii_clock(QWidget):
 
         # 테스트 전용 구문
 
+        '''
         self.test_button = QPushButton("라이브 테스트")
         self.test_button.clicked.connect(self.test)
-
         test_box = QHBoxLayout()
         test_box.addWidget(self.test_button)
+        '''
 
         self.notice_label = QLabel("시계위치와 폰트크기, 시간데 보정과 화면크기는\n새로고침을 눌러주세요!")
 
@@ -330,7 +330,7 @@ class wcii_clock(QWidget):
         custom_box = QVBoxLayout()
 
         # 테스트 전용 구문
-        custom_box.addLayout(test_box)
+        #custom_box.addLayout(test_box)
         # 테스트 전용 구문 끝
 
         # custom_box.addLayout(discord_box)
@@ -341,21 +341,23 @@ class wcii_clock(QWidget):
         return groupbox
 
     def kill(self):
-
-        reply = QMessageBox.question(self, '지금몇시계를 내쫒으실 건가요...?', "시계를 단순히 끄고 싶다면 종료하지말고 비활성화를 해주세요.",
-                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-        if reply == QMessageBox.Yes:
-                iniup("clock_on", "kill")
-                self.clock_off_rb.setChecked(True)
-                QMessageBox.information(self, "지금몇시계를 종료했습니다", "시계를 켜실려면 다시 코어를 실행해주세요!")
-        else:
+        if check_live() != "live":
             QMessageBox.information(self, "시계가 이미 꺼져있어요..", "시계가 이미 꺼져있어요..")
+        else:
+            reply = QMessageBox.question(self, '지금몇시계를 내쫒으실 건가요...?', "시계를 단순히 끄고 싶다면 종료하지말고 비활성화를 해주세요.",
+                                             QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                    iniup("clock_on", "kill")
+                    self.clock_off_rb.setChecked(True)
+                    QMessageBox.information(self, "지금몇시계를 종료했습니다", "시계를 켜실려면 다시 코어를 실행해주세요!")
 
+    '''
     def test(self):
         if check_live() == "live":
             print("코어가 살아있음")
         else:
             print("코어가 죽었거나 응답하지 않음")
+    '''
 
     def screen_W_set(self):
         val = self.screensize_W.value()

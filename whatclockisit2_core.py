@@ -17,7 +17,7 @@ appimage = appdatafolder + "image/"
 applog = appdatafolder + "log/"
 apptemp = appdatafolder + "temp/"
 
-dimage = appimage + "whatclockisit2_wallpaper_source.png"
+dimage = appimage + "wcii_dimage.png"
 dffile = "NotoSansCJKkr-Black.otf"
 dffolder = appfont
 
@@ -32,7 +32,6 @@ def iniup(ini_key, ini_value):
         config.write(main)
 
 
-
 #에러 설정
 class wallpaper_error(Exception):
     def __str__(self):
@@ -44,9 +43,10 @@ class font_error(Exception):
 
 # 배경화면 생성 및 등록 함수 (메인 함수)
 def wcii_wallpaper(wciitext):
+    print("<새로고침 요청>")
     nowtime = wciitime()
     nowtext = wciitext
-    ws = data['wallpaper_source']
+    ws = 'C:/Users/hyuns/AppData/Local/whatclockisit/image/wcii_wall.png'
     ffolder = data['fontfolder']
     ffile = data['fontfile']
     fsize = int(data['fontsize'])
@@ -83,7 +83,7 @@ def wcii_wallpaper(wciitext):
     print("<바탕화면 새로고침>")
 
 def stop_wallpaper():
-    ws = data['wallpaper_source']
+    ws = 'C:/Users/hyuns/AppData/Local/whatclockisit/image/wcii_wall.png'
     ffolder = data['fontfolder']
     ffile = data['fontfile']
     fsize = int(data['fontsize'])
@@ -148,18 +148,20 @@ if True:
             elif data["clock_on"] == "off":
                 sleep(0.9)
 
+            elif data["reflesh"] == "yes":  # 새로고침
+                print('[리플레시 요청]')
+                wciitextnow = wciitext()
+                wcii_wallpaper(wciitextnow)
+                iniup('reflesh', "no")
+                print("[새로고침 완료]")
+                sleep(0.1)
+
             else:
                 nowmin = now.strftime('%M') #30분마다 문구 불러오기
                 if nowmin == '59':
                     korean_nowtext = wciitext()
                 elif nowmin == '29':
                     korean_nowtext = wciitext()
-
-                if data["reflesh"] == "yes": #새로고침
-                    sleep(0.5)
-                    wciitextnow = wciitext()
-                    wcii_wallpaper(wciitextnow)
-                    iniup('reflesh', "no")
 
                 if now.strftime('%S') == "00": #실행
                     wcii_wallpaper(wciitextnow)
